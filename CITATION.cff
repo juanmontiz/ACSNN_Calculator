@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "ACSNN Calculator: Atomic Cross Section Neural Network"
+abstract: "Neural network surrogates for CDW-EIS, CTMC, and semi-empirical Rudd models for total ionization cross sections of atomic hydrogen by bare ion impact. Pure NumPy inference with CLI and desktop GUI interfaces."
+authors:
+  - family-names: "Monti"
+    given-names: "Juan Manuel"
+    orcid: "https://orcid.org/0000-0002-8652-4600"
+    affiliation: "CONICET / FCEIA, Universidad Nacional de Rosario"
+version: 1.0.0
+date-released: 2026-07-20
+license: MIT
+repository-code: "https://github.com/juanmontiz/ACSNN_Calculator"
+url: "https://github.com/juanmontiz/ACSNN_Calculator"
+type: software
+keywords:
+  - atomic collisions
+  - ionization cross sections
+  - CDW-EIS
+  - CTMC
+  - Rudd model
+  - neural network surrogate
+  - machine learning
+doi: 10.5281/zenodo.XXXXXXX   # concept DOI — fill in after first Zenodo deposit
