@@ -393,7 +393,7 @@ If you use this software in your research, please cite:
   title = {ACSNN Calculator: Atomic Cross Section Neural Network},
   author = {Juan Manuel Monti},
   year = {2026},
-  url = {https://github.com/juanmonti/ACSNN_Calculator},
+  url = {https://github.com/juanmontiz/ACSNN_Calculator},
   doi = {10.5281/zenodo.XXXXXXX}
 }
 ```
