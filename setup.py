@@ -3,7 +3,7 @@
 
 """
 Setup configuration for ACSNN Calculator
-Atomic Cross Section Neural Network - Pure NumPy Implementation
+Atomic Collision Surrogate Neural Network - Pure NumPy Implementation
 
 To uninstall after installing via pip:
     pip uninstall acsnn-calculator
@@ -13,7 +13,7 @@ from setuptools import setup, find_packages
 setup(
     name="acsnn-calculator",
     version="1.0.0",
-    description="Atomic Cross Section Neural Network Calculator - Pure NumPy Implementation",
+    description="Atomic Collision Surrogate Neural Network Calculator - Pure NumPy Implementation",
     long_description=open("README.md", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
     author="Juan Manuel Monti",

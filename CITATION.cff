@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
-title: "ACSNN Calculator: Atomic Cross Section Neural Network"
+title: "ACSNN Calculator: Atomic Collision Surrogate Neural Network"
 abstract: "Neural network surrogates for CDW-EIS, CTMC, and semi-empirical Rudd models for total ionization cross sections of atomic hydrogen by bare ion impact. Pure NumPy inference with CLI and desktop GUI interfaces."
 authors:
   - family-names: "Monti"
@@ -14,7 +14,7 @@ authors:
   - family-names: "López"
     given-names: "Sebastián David"
     orcid: "https://orcid.org/0009-0009-4076-0120"
-    affiliation: "Instituto de Investigaciones en Energía No Convencional (INENCO, UNSa-CONICET)"
+    affiliation: "Departamento de Física, Facultad de Ciencias Exactas, Universidad Nacional de Salta (CONICET)"
 version: 1.0.0
 date-released: 2026-11-02
 license: MIT

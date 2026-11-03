@@ -55,7 +55,7 @@ def test_predict_conditional_output_shape(loaded_model, theory):
 @pytest.mark.parametrize("theory,emin,emax", [
     ("CDW-EIS", 10, 100000),
     ("CTMC", 15, 2500),
-    ("Semiempiric_1985Rudd", 0.1, 5000),
+    ("Semiempiric_1985Rudd", 1, 10000),
 ])
 def test_predict_conditional_positive_output(loaded_model, theory, emin, emax):
     """Cross sections must be positive (output is 10^predicted)."""
@@ -136,7 +136,7 @@ def test_predict_conditional_reproducible(loaded_model):
 
 def test_predict_conditional_regression(loaded_model):
     result = predict_conditional(loaded_model, "CDW-EIS", 1, 1, np.array([np.log10(100.0)]))
-    expected = 1.192564e-16  # Updated for new model (3-layer Gaussian)
+    expected = 1.2231577e-16  # v1.0.0 weights (CDW-EIS training value at 100 keV/u: 1.228e-16)
     assert abs(float(result.flatten()[0]) - expected) / expected < 1e-4
 
 

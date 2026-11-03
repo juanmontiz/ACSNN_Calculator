@@ -16,7 +16,7 @@ Input (5) → Linear(128) + Gaussian → Linear(128) + Gaussian → Linear(1)
 - **Activation**: Gaussian (exp(-x²))  
 - **Input dimension**: 5  
 - **Output dimension**: 1  
-- **Parameters**: ~33,000  
+- **Parameters**: 17,409  
 
 ### Input Features
 ```
@@ -169,8 +169,8 @@ Training energy ranges vary by theory:
 | Theory | Energy range (keV/u) |
 |--------|---------------------|
 | CDW-EIS | 10 – 100,000 |
-| CTMC | 25 – 2,500 |
-| Semiempiric_1985Rudd | 0.1 – 5,000 |
+| CTMC | 15 – 2,500 |
+| Semiempiric_1985Rudd | 1 – 10,000 |
 
 ### Target Atomic Number (Z_target)
 
@@ -237,8 +237,8 @@ Neural networks perform **interpolation** well (predicting inside the training r
 Training constraints defined in `acsnn/config.py`:
 
 ```python
-TRAIN_E_MIN = {"CDW-EIS": 10.0, "CTMC": 10.0, "Semiempiric_1985Rudd": 0.1}
-TRAIN_E_MAX = {"CDW-EIS": 100000.0, "CTMC": 100000.0, "Semiempiric_1985Rudd": 5000.0}
+TRAIN_E_MIN = {"CDW-EIS": 10.0,     "CTMC": 15.0,   "Semiempiric_1985Rudd": 1.0}
+TRAIN_E_MAX = {"CDW-EIS": 100000.0, "CTMC": 2500.0, "Semiempiric_1985Rudd": 10000.0}
 ZPROJ_SAFE  = {"CDW-EIS": 9, "CTMC": 9, "Semiempiric_1985Rudd": 1}
 ```
 

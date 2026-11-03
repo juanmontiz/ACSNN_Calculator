@@ -1,7 +1,7 @@
 # Copyright (c) 2025 Juan Manuel Monti
 # SPDX-License-Identifier: MIT
 
-"""ACSNN Calculator — Atomic Cross Section Neural Network."""
+"""ACSNN Calculator — Atomic Collision Surrogate Neural Network."""
 
 from .model import FlexibleNN, predict_conditional, _THEORIES
 

@@ -1,6 +1,6 @@
 # ACSNN Calculator
 
-**Atomic Cross Section Neural Network** - Fast prediction of atomic hydrogen ionization total cross-sections using a pure NumPy neural network implementation.
+**Atomic Collision Surrogate Neural Network** - Fast prediction of atomic hydrogen ionization total cross-sections using a pure NumPy neural network implementation.
 
 [![Tests](https://img.shields.io/badge/tests-30%20passing-brightgreen)]()
 [![Python](https://img.shields.io/badge/python-3.8+-blue)]()
@@ -153,7 +153,7 @@ Input (5) → Linear(128) + Gaussian → Linear(128) + Gaussian → Linear(1)
 
 - **Activation**: Gaussian (exp(-x²))
 - **Layers**: 3 (lin1, lin2, lin5)
-- **Parameters**: ~33,000
+- **Parameters**: 17,409
 - **Runtime**: 100% pure NumPy
 
 ### Input Features
@@ -244,7 +244,7 @@ python acsnn_cli.py CDW-EIS 1 1
 
 **Training Constraints:**
 
-The NN was trained on energy ranges: CDW-EIS/CTMC [10, 10⁵] keV/u, Semiempiric [0.1, 5000] keV/u; **only for Z_target=1**; with per-theory Z_proj limits (CDW-EIS/CTMC ≤9, Semiempiric =1). When Z_proj or energy falls outside the training range, `predict_conditional()` emits a warning and returns **NaN** instead of an extrapolated value — preventing silent propagation of non-physical results to downstream codes. See `MODEL_INFO.md` for details. Configure in `acsnn/config.py`.
+The NN was trained on energy ranges: CDW-EIS [10, 10⁵] keV/u, CTMC [15, 2500] keV/u, Semiempiric [1, 10⁴] keV/u; **only for Z_target=1**; with per-theory Z_proj limits (CDW-EIS/CTMC ≤9, Semiempiric =1). When Z_proj or energy falls outside the training range, `predict_conditional()` emits a warning and returns **NaN** instead of an extrapolated value — preventing silent propagation of non-physical results to downstream codes. See `MODEL_INFO.md` for details. Configure in `acsnn/config.py`.
 
 ## Testing
 
@@ -391,7 +391,7 @@ If you use this software in your research, please cite:
 ```bibtex
 @software{Monti_ACSNN_Calculator_2026,
   author  = {Monti, Juan Manuel and Quinto, Michele Arcangelo and L{\'o}pez, Sebasti{\'a}n David},
-  title   = {{ACSNN Calculator: Atomic Cross Section Neural Network}},
+  title   = {{ACSNN Calculator: Atomic Collision Surrogate Neural Network}},
   version = {1.0.0},
   year    = {2026},
   license = {MIT},
@@ -413,7 +413,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ### v1.0.0
 - ✅ Pure NumPy inference (no PyTorch)
-- ✅ 3-layer Gaussian architecture (~33K params)
+- ✅ 3-layer Gaussian architecture (17,409 params)
 - ✅ CLI and Tkinter GUI interfaces
 - ✅ 30 comprehensive tests
 - ✅ Complete documentation
