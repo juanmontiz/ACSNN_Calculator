@@ -7,6 +7,14 @@ authors:
     given-names: "Juan Manuel"
     orcid: "https://orcid.org/0000-0002-8652-4600"
     affiliation: "CONICET / FCEIA, Universidad Nacional de Rosario"
+  - family-names: "Quinto"
+    given-names: "Michele Arcangelo"
+    orcid: "https://orcid.org/0000-0002-1598-9128"
+    affiliation: "Instituto de Física Rosario (CONICET-UNR)"
+  - family-names: "López"
+    given-names: "Sebastián David"
+    orcid: "https://orcid.org/0009-0009-4076-0120"
+    affiliation: "Instituto de Investigaciones en Energía No Convencional (INENCO, UNSa-CONICET)"
 version: 1.0.0
 date-released: 2026-11-02
 license: MIT
