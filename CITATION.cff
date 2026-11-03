@@ -8,7 +8,7 @@ authors:
     orcid: "https://orcid.org/0000-0002-8652-4600"
     affiliation: "CONICET / FCEIA, Universidad Nacional de Rosario"
 version: 1.0.0
-date-released: 2026-07-20
+date-released: 2026-11-02
 license: MIT
 repository-code: "https://github.com/juanmontiz/ACSNN_Calculator"
 url: "https://github.com/juanmontiz/ACSNN_Calculator"
@@ -16,9 +16,9 @@ type: software
 keywords:
   - atomic collisions
   - ionization cross sections
+  - atomic hydrogen
   - CDW-EIS
   - CTMC
   - Rudd model
   - neural network surrogate
   - machine learning
-doi: 10.5281/zenodo.XXXXXXX   # concept DOI — fill in after first Zenodo deposit
