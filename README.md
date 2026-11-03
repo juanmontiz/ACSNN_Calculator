@@ -389,12 +389,13 @@ The codebase is organized for clarity and maintainability:
 If you use this software in your research, please cite:
 
 ```bibtex
-@software{acsnn_calculator,
-  title = {ACSNN Calculator: Atomic Cross Section Neural Network},
-  author = {Juan Manuel Monti},
-  year = {2026},
-  url = {https://github.com/juanmontiz/ACSNN_Calculator},
-  doi = {10.5281/zenodo.XXXXXXX}
+@software{Monti_ACSNN_Calculator_2026,
+  author  = {Monti, Juan Manuel and Quinto, Michele Arcangelo and L{\'o}pez, Sebasti{\'a}n David},
+  title   = {{ACSNN Calculator: Atomic Cross Section Neural Network}},
+  version = {1.0.0},
+  year    = {2026},
+  license = {MIT},
+  url     = {https://github.com/juanmontiz/ACSNN_Calculator}
 }
 ```
 
@@ -421,5 +422,3 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ---
 
 **Status**: ✅ Production Ready | **Tests**: 30/30 Passing | **Dependencies**: NumPy Only
-
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX)
