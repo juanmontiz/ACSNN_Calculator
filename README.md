@@ -44,6 +44,10 @@ python acsnn_cli.py CDW-EIS 1 1 100
 python acsnn_cli.py CDW-EIS 1 1 --output results.csv
 ```
 
+### WEB Usage
+
+<https://juanmontiz.github.io/ACSNN_web/>
+
 ### Python API
 
 ```python
