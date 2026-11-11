@@ -190,3 +190,114 @@ def test_run_calculation_csv_export(tmp_path):
     import pandas as pd
     df = pd.read_csv(out)
     assert len(df) == 5
+
+
+# ---------------------------------------------------------------------------
+# Soft limit: physical validity domain of each theory (value kept + NOTICE)
+# ---------------------------------------------------------------------------
+
+from acsnn import validity_range, validity_flags, OUTSIDE_TRAINING, OUTSIDE_VALIDITY, VALID
+
+
+def test_validity_range_cdweis_sommerfeld():
+    """CDW-EIS valid for eta = Zp/v < 1, i.e. E > 24.98 Zp^2 keV/u."""
+    assert validity_range("CDW-EIS", 1)[0] == pytest.approx(24.98)
+    assert validity_range("CDW-EIS", 3)[0] == pytest.approx(24.98 * 9)
+
+
+def test_validity_range_ctmc_and_rudd():
+    assert validity_range("CTMC", 5) == (75.0, 500.0)
+    assert validity_range("Semiempiric_1985Rudd", 1) == (0.0, np.inf)
+
+
+def test_validity_flags_ctmc():
+    e = np.array([10.0, 50.0, 100.0, 1000.0, 3000.0])
+    assert list(validity_flags("CTMC", 2, e)) == [
+        OUTSIDE_TRAINING, OUTSIDE_VALIDITY, VALID, OUTSIDE_VALIDITY, OUTSIDE_TRAINING]
+
+
+def test_validity_flags_cdweis_zp_dependent():
+    e = np.array([100.0, 1000.0])
+    assert list(validity_flags("CDW-EIS", 1, e)) == [VALID, VALID]
+    assert list(validity_flags("CDW-EIS", 9, e)) == [OUTSIDE_VALIDITY, OUTSIDE_VALIDITY]
+
+
+def test_validity_flags_rudd_never_soft():
+    e = np.array([1.0, 5.0, 10000.0])
+    assert list(validity_flags("Semiempiric_1985Rudd", 1, e)) == [VALID] * 3
+
+
+def test_validity_flags_zp_oob_is_hard():
+    assert list(validity_flags("Semiempiric_1985Rudd", 2, [100.0])) == [OUTSIDE_TRAINING]
+
+
+def test_soft_limit_returns_value_and_notice(loaded_model, caplog):
+    """Outside validity but inside training: finite value + NOTICE, no WARNING."""
+    with caplog.at_level(1, logger="acsnn.model"):
+        result = predict_conditional(loaded_model, "CDW-EIS", 9, 1, np.log10([20.0]))
+    assert np.isfinite(result).all() and (result > 0).all()
+    levels = [r.levelname for r in caplog.records]
+    assert "NOTICE" in levels and "WARNING" not in levels
+
+
+def test_inside_validity_no_message(loaded_model, caplog):
+    with caplog.at_level(1, logger="acsnn.model"):
+        predict_conditional(loaded_model, "CTMC", 2, 1, np.log10([100.0, 300.0]))
+    assert not caplog.records
+
+
+def test_hard_limit_no_soft_notice_for_nan_points(loaded_model, caplog):
+    """Points outside training are NaN with WARNING; they do not also trigger NOTICE."""
+    with caplog.at_level(1, logger="acsnn.model"):
+        result = predict_conditional(loaded_model, "CTMC", 2, 1, np.log10([5.0, 100.0]))
+    assert np.isnan(result[0, 0]) and np.isfinite(result[1, 0])
+    assert [r.levelname for r in caplog.records] == ["WARNING"]
+
+
+def test_run_calculation_validity_column(tmp_path):
+    out = tmp_path / "v.csv"
+    df = run_calculation("CTMC", Zp=2, Zt=1, x_min=10, x_max=3000, npoints=8, output_file=str(out))
+    assert "Validity" in df.columns
+    assert df["Validity"].iloc[0] == OUTSIDE_TRAINING and np.isnan(df["TCS_CTMC"].iloc[0])
+    soft = df["Validity"] == OUTSIDE_VALIDITY
+    assert soft.any() and np.isfinite(df.loc[soft, "TCS_CTMC"]).all()
+    import pandas as pd
+    assert list(pd.read_csv(out).columns) == ["E[keV/u]", "TCS_CTMC", "Validity"]
+
+
+# ---------------------------------------------------------------------------
+# CLI quiet mode (-q hides soft notices, -qq hides all ACSNN messages)
+# ---------------------------------------------------------------------------
+
+import logging
+from acsnn_cli import main as cli_main
+
+
+def _cli(argv, capsys, caplog):
+    with caplog.at_level(1, logger="acsnn.model"):
+        caplog.clear()
+        rc = cli_main(argv)
+        levels = [r.levelname for r in caplog.records]
+    return rc, capsys.readouterr().out.strip(), levels
+
+
+@pytest.mark.parametrize("q,expected", [([], ["NOTICE"]), (["-q"], []), (["-qq"], [])])
+def test_cli_quiet_soft_notice(capsys, caplog, q, expected):
+    rc, out, levels = _cli(q + ["--value-only", "CDW-EIS", "9", "1", "20"], capsys, caplog)
+    assert rc == 0 and float(out) > 0
+    assert levels == expected
+
+
+@pytest.mark.parametrize("q,expected", [(["-q"], ["WARNING"]), (["-qq"], [])])
+def test_cli_quiet_hard_warning(capsys, caplog, q, expected):
+    rc, out, levels = _cli(q + ["--value-only", "CDW-EIS", "1", "1", "5"], capsys, caplog)
+    assert rc == 0 and out == "nan"
+    assert levels == expected
+
+
+def test_cli_quiet_restores_logger_level(capsys):
+    log = logging.getLogger("acsnn.model")
+    before = log.level
+    cli_main(["-qq", "--value-only", "CDW-EIS", "1", "1", "100"])
+    capsys.readouterr()
+    assert log.level == before

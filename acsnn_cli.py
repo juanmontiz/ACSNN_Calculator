@@ -7,11 +7,12 @@ Allows running calculations without the GUI
 """
 
 import argparse
+import logging
 import numpy as np
 import os
 import pandas as pd
 from acsnn.config import MODEL_PATH, EXPERIMENTAL_DATA_PATH, DEFAULT_X_MIN, DEFAULT_X_MAX, DEFAULT_N_POINTS
-from acsnn import FlexibleNN, predict_conditional
+from acsnn import FlexibleNN, predict_conditional, validity_flags
 
 
 def load_model():
@@ -31,7 +32,8 @@ def run_calculation(theory, Zp, Zt, x_min=DEFAULT_X_MIN, x_max=DEFAULT_X_MAX, np
 
     results_df = pd.DataFrame({
         'E[keV/u]': x,
-        f'TCS_{theory}': y.flatten() if y.ndim > 1 else y
+        f'TCS_{theory}': y.flatten() if y.ndim > 1 else y,
+        'Validity': validity_flags(theory, Zp, x),
     })
 
     if output_file:
@@ -53,7 +55,7 @@ def run_single_calculation(theory, Zp, Zt, energy_value):
     return float(y.flatten()[0]) if y.ndim > 1 else float(y[0])
 
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser(description='Atomic Cross Section Calculator CLI')
     parser.add_argument('theory', choices=["CDW-EIS", "CTMC", "Semiempiric_1985Rudd"],
                         help='Theory to use for calculation')
@@ -62,17 +64,33 @@ def main():
     parser.add_argument('energy_value', type=float, nargs='?',
                         help='Single energy value for calculation (keV/u). If provided, calculates only this value instead of a range.')
     parser.add_argument('--x-min', type=float, default=DEFAULT_X_MIN,
-                        help='Minimum x value (default: 10)')
+                        help='Minimum energy in keV/u (default: %(default)s)')
     parser.add_argument('--x-max', type=float, default=DEFAULT_X_MAX,
-                        help='Maximum x value (default: 10000)')
+                        help='Maximum energy in keV/u (default: %(default)s)')
     parser.add_argument('--npoints', type=int, default=DEFAULT_N_POINTS,
-                        help='Number of points (default: 300)')
+                        help='Number of points (default: %(default)s)')
     parser.add_argument('--output', '-o', help='Output CSV file path')
     parser.add_argument('--value-only', action='store_true',
                         help='Output only the numerical value without descriptive text')
+    parser.add_argument('-q', '--quiet', action='count', default=0,
+                        help='-q: hide soft notices (theory outside its validity domain); '
+                             '-qq: hide all ACSNN messages, including hard warnings (NaN results)')
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
+    acsnn_log = logging.getLogger("acsnn.model")
+    previous_level = acsnn_log.level
+    if args.quiet == 1:
+        acsnn_log.setLevel(logging.WARNING)
+    elif args.quiet >= 2:
+        acsnn_log.setLevel(logging.CRITICAL + 1)
+    try:
+        return _run(args)
+    finally:
+        acsnn_log.setLevel(previous_level)
+
+
+def _run(args):
     if args.Zp <= 0 or args.Zt <= 0:
         print("Error: Zp and Zt must be positive integers")
         return 1

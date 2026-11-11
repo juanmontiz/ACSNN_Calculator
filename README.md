@@ -89,11 +89,12 @@ python acsnn_cli.py <theory> <Z_projectile> <Z_target> [energy] [options]
 - `energy`: (optional) Single energy value in keV/u
 
 **Options:**  
-- `--x-min`: Minimum energy (default: 10 keV/u)  
-- `--x-max`: Maximum energy (default: 10000 keV/u)  
-- `--npoints`: Number of points (default: 300)  
+- `--x-min`: Minimum energy (default: 100 keV/u)  
+- `--x-max`: Maximum energy (default: 1000 keV/u)  
+- `--npoints`: Number of points (default: 100)  
 - `--output`: Output CSV file  
 - `--value-only`: Print only the numeric value (for single energy)  
+- `-q`, `--quiet`: `-q` hides the soft notices (theory outside its validity domain); `-qq` hides all ACSNN messages, including the hard warnings that explain NaN results. Messages always go to stderr, results to stdout.  
 
 **Examples:**
 
@@ -109,6 +110,9 @@ python acsnn_cli.py CDW-EIS 1 1 100.5
 
 # Pipe to other tools
 python acsnn_cli.py --value-only CDW-EIS 1 1 100 | awk '{print $1 * 1e16}'
+
+# Called from another code: value only, no messages
+python acsnn_cli.py -qq --value-only CDW-EIS 9 1 20
 ```
 
 ### 2. Desktop GUI (Tkinter)
@@ -248,7 +252,9 @@ python acsnn_cli.py CDW-EIS 1 1
 
 **Training Constraints:**
 
-The NN was trained on energy ranges: CDW-EIS [10, 10⁵] keV/u, CTMC [15, 2500] keV/u, Semiempiric [1, 10⁴] keV/u; **only for Z_target=1**; with per-theory Z_proj limits (CDW-EIS/CTMC ≤9, Semiempiric =1). When Z_proj or energy falls outside the training range, `predict_conditional()` emits a warning and returns **NaN** instead of an extrapolated value — preventing silent propagation of non-physical results to downstream codes. See `MODEL_INFO.md` for details. Configure in `acsnn/config.py`.
+The NN was trained on energy ranges: CDW-EIS [10, 10⁵] keV/u, CTMC [15, 2500] keV/u, Semiempiric [1, 10⁴] keV/u; **only for Z_target=1**; with per-theory Z_proj limits (CDW-EIS/CTMC ≤9, Semiempiric =1). When Z_proj or energy falls outside the training range, `predict_conditional()` emits a warning and returns **NaN** instead of an extrapolated value — preventing silent propagation of non-physical results to downstream codes.
+
+In addition, a **soft notice** (value still returned) is emitted when the input is inside the training range but outside the physical validity domain of the theory: CDW-EIS outside the perturbative regime (η = Z_proj/v ≥ 1, i.e. E ≤ 24.98·Z_proj² keV/u) and CTMC outside ≈ 75–500 keV/u. CSV output (CLI `--output`, GUI and web app) includes a `Validity` column (`valid` / `outside_validity` / `outside_training`). See `MODEL_INFO.md` for details. Configure in `acsnn/config.py`.
 
 ## Testing
 
@@ -259,7 +265,7 @@ Run the test suite to verify the installation:
 python -m pytest test_model.py -v
 
 # Expected output:
-# 30 passed in 0.22s ✅
+# 46 passed in 0.28s ✅
 ```
 
 **Test coverage:**
@@ -270,6 +276,7 @@ python -m pytest test_model.py -v
 - Out-of-range Z_proj returns NaN
 - Out-of-range energy returns NaN
 - Mixed in-range/out-of-range energies
+- Theory validity domain (soft notice, value kept, CSV Validity column)
 - Reproducibility
 - Regression tests
 - CLI functions

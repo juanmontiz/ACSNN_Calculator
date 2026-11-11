@@ -6,7 +6,13 @@
 import logging
 import sys
 import numpy as np
-from acsnn.config import TRAIN_E_MIN, TRAIN_E_MAX, ZPROJ_SAFE
+from acsnn.config import (TRAIN_E_MIN, TRAIN_E_MAX, ZPROJ_SAFE,
+                          E_PER_AU_VELOCITY2, CTMC_VALID_E)
+
+# Soft notice level (between INFO and WARNING): theory outside its physical
+# validity domain, value still returned. Hard problems (NaN) use WARNING.
+NOTICE = 25
+logging.addLevelName(NOTICE, "NOTICE")
 
 log = logging.getLogger(__name__)
 if not log.handlers:
@@ -18,7 +24,7 @@ if not log.handlers:
         _BOLD = "\033[1m" if platform.system() != "Windows" else ""
         _RESET = "\033[0m" if platform.system() != "Windows" else ""
         class _Fmt(logging.Formatter):
-            _MAP = {logging.WARNING: _YELLOW, logging.ERROR: _RED}
+            _MAP = {NOTICE: _YELLOW, logging.WARNING: _RED, logging.ERROR: _RED}
             def format(self, r):
                 c = self._MAP.get(r.levelno)
                 return (c + _BOLD + "[ACSNN] " + _RESET + c +
@@ -27,7 +33,7 @@ if not log.handlers:
     else:
         _handler.setFormatter(logging.Formatter("[ACSNN] %(levelname)s: %(message)s"))
     log.addHandler(_handler)
-    log.setLevel(logging.WARNING)
+    log.setLevel(NOTICE)
 
 _THEORIES = ["CDW-EIS", "CTMC", "Semiempiric_1985Rudd"]
 _ONE_HOT = {t: np.eye(3, dtype=np.float32)[i] for i, t in enumerate(_THEORIES)}
@@ -96,6 +102,43 @@ class FlexibleNN:
         return x
 
 
+VALID, OUTSIDE_VALIDITY, OUTSIDE_TRAINING = "valid", "outside_validity", "outside_training"
+
+
+def validity_range(theory: str, Z_proj):
+    """
+    Physical validity domain (E_min, E_max) in keV/u of a theory for a given
+    projectile charge (soft limit, see acsnn/config.py):
+    CDW-EIS: eta = Z_proj/v < 1, i.e. E > 24.98 * Z_proj**2 keV/u;
+    CTMC: 75-500 keV/u; Semiempiric_1985Rudd: unrestricted.
+    """
+    if theory == "CDW-EIS":
+        return (E_PER_AU_VELOCITY2 * float(Z_proj) ** 2, np.inf)
+    if theory == "CTMC":
+        return CTMC_VALID_E
+    if theory == "Semiempiric_1985Rudd":
+        return (0.0, np.inf)
+    raise ValueError(f"Unknown theory: {theory}")
+
+
+def validity_flags(theory: str, Z_proj, energies):
+    """
+    Per-energy validity label for energies in keV/u (not log10):
+    "outside_training" (hard: prediction is NaN), "outside_validity" (soft:
+    prediction returned but the theory is outside its physical validity
+    domain) or "valid".
+    """
+    e = np.atleast_1d(np.asarray(energies, dtype=float))
+    v_min, v_max = validity_range(theory, Z_proj)
+    flags = np.full(e.shape, VALID, dtype=object)
+    flags[(e <= v_min) | (e > v_max)] = OUTSIDE_VALIDITY
+    if Z_proj > ZPROJ_SAFE[theory]:
+        flags[:] = OUTSIDE_TRAINING
+    else:
+        flags[(e < TRAIN_E_MIN[theory]) | (e > TRAIN_E_MAX[theory])] = OUTSIDE_TRAINING
+    return flags
+
+
 def predict_conditional(model, theory: str, Z_proj, Z_target, values):
     """
     Make predictions for a specific theory and projectile combination.
@@ -118,7 +161,12 @@ def predict_conditional(model, theory: str, Z_proj, Z_target, values):
     Returns:
     --------
     predictions : np.ndarray
-        Cross-section predictions (10^model_output)
+        Cross-section predictions (10^model_output).
+        Hard limit: outside the training domain (energy or Z_proj) a WARNING is
+        logged and NaN is returned. Soft limit: inside the training range but
+        outside the physical validity domain of the theory (see validity_range)
+        a NOTICE is logged and the value is returned. Use validity_flags() for
+        per-point labels.
     """
     enc = _ONE_HOT[theory]
     n = len(values)
@@ -152,14 +200,40 @@ def predict_conditional(model, theory: str, Z_proj, Z_target, values):
         hi = e_in > e_max
         parts = []
         if lo.any():
-            parts.append(f"({e_in[lo].min():.3g} keV/u) below")
+            parts.append(f"({e_in[lo].min():.4g} keV/u) below")
         if hi.any():
-            parts.append(f"({e_in[hi].max():.3g} keV/u) above")
+            parts.append(f"({e_in[hi].max():.4g} keV/u) above")
         log.warning(
             "Energy %s training range [%g, %g] keV/u for %s. "
             "Returning NaN for out-of-range values.",
             " and ".join(parts), e_min, e_max, theory,
         )
+
+    # Soft notice: inside the training range but outside the theory's validity domain
+    if not zp_oob:
+        v_min, v_max = validity_range(theory, Z_proj)
+        log10_vmin = np.log10(v_min) if v_min > 0 else -np.inf
+        log10_vmax = np.log10(v_max)
+        soft_lo = ~energy_oob & (values <= log10_vmin)
+        soft_hi = ~energy_oob & (values > log10_vmax)
+        if soft_lo.any() or soft_hi.any():
+            e_in = 10.0 ** values
+            parts = []
+            if soft_lo.any():
+                parts.append(f"({e_in[soft_lo].min():.4g} keV/u) below")
+            if soft_hi.any():
+                parts.append(f"({e_in[soft_hi].max():.4g} keV/u) above")
+            if theory == "CDW-EIS":
+                domain = (f"perturbative regime eta = Z_proj/v < 1, "
+                          f"i.e. E > {v_min:.4g} keV/u for Z_proj={Z_proj}")
+            else:
+                domain = f"approx. [{v_min:g}, {v_max:g}] keV/u"
+            log.log(
+                NOTICE,
+                "Energy %s validity domain of %s (%s). Values are returned, "
+                "but the underlying theory may be inaccurate there.",
+                " and ".join(parts), theory, domain,
+            )
 
     x = np.column_stack([
         np.full(n, Z_proj, dtype=np.float32),

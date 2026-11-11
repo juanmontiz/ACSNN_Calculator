@@ -15,7 +15,7 @@ import sys
 import csv
 import pandas as pd
 from acsnn.config import MODEL_PATH, EXPERIMENTAL_DATA_PATH, DEFAULT_X_MIN, DEFAULT_X_MAX, DEFAULT_N_POINTS, TRAIN_E_MIN, TRAIN_E_MAX
-from acsnn import FlexibleNN, predict_conditional
+from acsnn import FlexibleNN, predict_conditional, validity_flags
 
 
 class AtomicCrossSectionApp:
@@ -477,7 +477,8 @@ class AtomicCrossSectionApp:
         else:
             common_x = np.linspace(x_min, x_max, npoints)
 
-        all_y_data = {}
+        # One (TCS, Validity) pair per curve, in curve order
+        curve_data = []
 
         for theory_info in self.theories_data:
             func = theory_info['func']
@@ -486,9 +487,10 @@ class AtomicCrossSectionApp:
 
             if func in ["CDW-EIS", "CTMC", "Semiempiric_1985Rudd"]:
                 y = predict_conditional(self.model, func, Zp, Zt, np.log10(common_x))
-                all_y_data[f"TCS_{func}"] = y.flatten() if y.ndim > 1 else y
+                y = y.flatten() if y.ndim > 1 else y
+                curve_data.append((y, validity_flags(func, Zp, common_x)))
             else:
-                all_y_data[f"TCS_{func}"] = np.full_like(common_x, np.nan)
+                curve_data.append((np.full_like(common_x, np.nan), np.full(common_x.shape, "", dtype=object)))
                 messagebox.showerror("Wrong Model")
 
         file_path = filedialog.asksaveasfilename(
@@ -511,18 +513,21 @@ class AtomicCrossSectionApp:
                         for t in self.theories_data
                     )
                     writer.writerow([f"# Training ranges: {range_notes}"])
-                    writer.writerow([f"# NaN = outside training range (extrapolation unreliable)"])
+                    writer.writerow([f"# Empty TCS = outside training range (extrapolation unreliable)"])
+                    writer.writerow([f"# Validity: valid | outside_validity (value returned but theory outside its "
+                                     f"physical validity domain) | outside_training (no value)"])
 
-                    headers = ["E[keV/u]"] + [f"TCS {t['func']}" for t in self.theories_data]
+                    headers = ["E[keV/u]"]
+                    for t in self.theories_data:
+                        headers += [f"TCS {t['func']} Zp{t['Zp']}", f"Validity {t['func']} Zp{t['Zp']}"]
                     writer.writerow(headers)
 
                     for i in range(len(common_x)):
                         row = [float(common_x[i])]
-                        for theory_info in self.theories_data:
-                            func = theory_info['func']
-                            y_val = all_y_data[f"TCS_{func}"][i]
-                            y_val = float(y_val) if hasattr(y_val, 'item') else y_val
+                        for y, flags in curve_data:
+                            y_val = float(y[i])
                             row.append("" if np.isnan(y_val) else y_val)
+                            row.append(flags[i])
                         writer.writerow(row)
 
                 messagebox.showinfo("Success", f"Multiple theories exported successfully to {file_path}")

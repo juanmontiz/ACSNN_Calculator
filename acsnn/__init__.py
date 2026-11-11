@@ -3,7 +3,9 @@
 
 """ACSNN Calculator — Atomic Collision Surrogate Neural Network."""
 
-from .model import FlexibleNN, predict_conditional, _THEORIES
+from .model import (FlexibleNN, predict_conditional, validity_range, validity_flags,
+                    _THEORIES, VALID, OUTSIDE_VALIDITY, OUTSIDE_TRAINING)
 
 THEORIES = _THEORIES
-__all__ = ["FlexibleNN", "predict_conditional", "THEORIES"]
+__all__ = ["FlexibleNN", "predict_conditional", "validity_range", "validity_flags", "THEORIES",
+           "VALID", "OUTSIDE_VALIDITY", "OUTSIDE_TRAINING"]

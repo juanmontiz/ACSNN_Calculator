@@ -24,3 +24,13 @@ TRAIN_E_MAX = {"CDW-EIS": 100000.0, "CTMC": 2500.0, "Semiempiric_1985Rudd": 1000
 # Safe Z_proj limit (max trained per theory)
 # CDW-EIS and CTMC safe up to Z_proj=9; Semiempiric only for Z_proj=1
 ZPROJ_SAFE = {"CDW-EIS": 9, "CTMC": 9, "Semiempiric_1985Rudd": 1}
+
+# Physical validity domain of each theory (soft limit: the NN value is returned,
+# with a notice, because the theory itself is unreliable there; see the paper).
+# E [keV/u] of a projectile with velocity v = 1 a.u.
+E_PER_AU_VELOCITY2 = 24.98
+# CDW-EIS: perturbative regime, Sommerfeld parameter eta = Z_proj/v < 1,
+#          i.e. E > E_PER_AU_VELOCITY2 * Z_proj**2 keV/u.
+# CTMC: intermediate energies (approximate window, boundaries are blurred).
+# Semiempiric_1985Rudd: no restriction inside its training range.
+CTMC_VALID_E = (75.0, 500.0)

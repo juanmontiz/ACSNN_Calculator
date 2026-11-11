@@ -190,43 +190,62 @@ Passing Z_proj above this limit emits a warning. These limits are defined in `ZP
 
 ## Behavior Outside Training Constraints
 
-`predict_conditional()` validates all three constraints at inference time using Python's `logging` module. Warnings are emitted to stderr with the prefix `[ACSNN] WARNING:`:
+`predict_conditional()` checks two kinds of limits at inference time using Python's `logging` module
+(logger `acsnn.model`, messages to stderr with the prefix `[ACSNN]`):
 
-- **Energy outside training range (below):**
+- **Hard limit — training domain** (`WARNING`, red in a terminal): the input lies outside the data the
+  NN was trained on. The prediction is replaced by **NaN**.
+- **Soft limit — physical validity domain of the theory** (`NOTICE`, yellow in a terminal): the input
+  is inside the training range, so the NN reproduces the theory faithfully, but the theory itself is
+  outside its regime of validity. The value **is returned**.
 
-  ```
-  [ACSNN] WARNING: Energy (1 keV/u) below training range [10, 100000] keV/u for CDW-EIS.
-  Extrapolation may be unreliable.
-  ```
+### Hard limit (NaN)
 
-- **Energy outside training range (above):**
-
-  ```
-  [ACSNN] WARNING: Energy (2e+05 keV/u) above training range [10, 100000] keV/u for CDW-EIS.
-  Extrapolation may be unreliable.
-  ```
-
-- **Energy outside both bounds:**
+- **Energy outside training range (below / above / both):**
 
   ```
-  [ACSNN] WARNING: Energy (1 keV/u) below and (2e+05 keV/u) above training range
-  [10, 100000] keV/u for CDW-EIS. Extrapolation may be unreliable.
-  ```
-
-- **Z_target ≠ 1:**
-
-  ```
-  [ACSNN] WARNING: Model trained only for Z_target=1 (hydrogen target).
-  Z_target=6 is not a model input — predictions are for hydrogen regardless.
-  Set Z_target=1 for clarity.
+  [ACSNN] WARNING: Energy (1 keV/u) below training range [10, 100000] keV/u for CDW-EIS. Returning NaN for out-of-range values.
+  [ACSNN] WARNING: Energy (2e+05 keV/u) above training range [10, 100000] keV/u for CDW-EIS. Returning NaN for out-of-range values.
+  [ACSNN] WARNING: Energy (1 keV/u) below and (2e+05 keV/u) above training range [10, 100000] keV/u for CDW-EIS. Returning NaN for out-of-range values.
   ```
 
 - **Z_proj exceeds trained maximum:**
 
   ```
-  [ACSNN] WARNING: Z_proj=10 exceeds max trained (9) for CDW-EIS.
-  Extrapolation may be unreliable.
+  [ACSNN] WARNING: Z_proj=10 exceeds safe limit (9) for CDW-EIS. Returning NaN.
   ```
+
+- **Z_target ≠ 1** (warning only; predictions are for hydrogen):
+
+  ```
+  [ACSNN] WARNING: Model trained only for Z_target=1 (hydrogen target). Z_target=6 is not a model input — predictions are for hydrogen regardless. Set Z_target=1 for clarity.
+  ```
+
+### Soft limit (value returned)
+
+| Theory | Validity domain | Origin |
+|--------|-----------------|--------|
+| CDW-EIS | E > 24.98 · Z_proj² keV/u | perturbative regime, Sommerfeld parameter η = Z_proj/v < 1 |
+| CTMC | ≈ 75 – 500 keV/u | intermediate energies (approximate, the boundaries are blurred) |
+| Semiempiric_1985Rudd | whole training range | — |
+
+```
+[ACSNN] NOTICE: Energy (100 keV/u) below validity domain of CDW-EIS (perturbative regime eta = Z_proj/v < 1, i.e. E > 899.3 keV/u for Z_proj=6). Values are returned, but the underlying theory may be inaccurate there.
+[ACSNN] NOTICE: Energy (1000 keV/u) above validity domain of CTMC (approx. [75, 500] keV/u). Values are returned, but the underlying theory may be inaccurate there.
+```
+
+Per-point labels are available programmatically:
+
+```python
+from acsnn import validity_flags, validity_range
+validity_flags("CTMC", 2, [10, 50, 100, 1000])
+# -> ['outside_training', 'outside_validity', 'valid', 'outside_validity']
+validity_range("CDW-EIS", 6)   # -> (899.28, inf)
+```
+
+The CSV files written by the CLI (`--output`), the GUI and the web app contain a **Validity** column with
+these labels (`valid`, `outside_validity`, `outside_training`). To silence the soft notices only:
+`logging.getLogger("acsnn.model").setLevel(logging.WARNING)`.
 
 ### Why Extrapolation Matters
 
@@ -240,6 +259,13 @@ Training constraints defined in `acsnn/config.py`:
 TRAIN_E_MIN = {"CDW-EIS": 10.0,     "CTMC": 15.0,   "Semiempiric_1985Rudd": 1.0}
 TRAIN_E_MAX = {"CDW-EIS": 100000.0, "CTMC": 2500.0, "Semiempiric_1985Rudd": 10000.0}
 ZPROJ_SAFE  = {"CDW-EIS": 9, "CTMC": 9, "Semiempiric_1985Rudd": 1}
+```
+
+Theory validity domains (soft limits) are defined in the same file:
+
+```python
+E_PER_AU_VELOCITY2 = 24.98          # E [keV/u] for v = 1 a.u.; CDW-EIS valid for E > 24.98 * Z_proj**2
+CTMC_VALID_E = (75.0, 500.0)        # CTMC validity window in keV/u
 ```
 
 If you retrain the model on a different range, update these to match.
