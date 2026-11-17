@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use this material, please cite the article below."
+title: "ACSNN: analysis code and data of the Supplementary Material"
+authors:
+  - family-names: Quinto
+    given-names: Michele Arcangelo
+    orcid: "https://orcid.org/0000-0002-1598-9128"
+  - family-names: Monti
+    given-names: Juan Manuel
+    orcid: "https://orcid.org/0000-0002-8652-4600"
+  - family-names: López
+    given-names: Sebastián D.
+    orcid: "https://orcid.org/0009-0009-4076-0120"
+license: MIT
+preferred-citation:
+  type: article
+  title: "ACSNN: Neural Network Surrogates for Ionization Cross Sections in Heavy Ion–Hydrogen Collisions"
+  authors:
+    - family-names: Quinto
+      given-names: Michele Arcangelo
+    - family-names: Monti
+      given-names: Juan Manuel
+    - family-names: López
+      given-names: Sebastián D.
+  journal: "Journal of Physics B: Atomic, Molecular and Optical Physics"
+  year: 2026

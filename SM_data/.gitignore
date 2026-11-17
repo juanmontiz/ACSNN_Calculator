@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+logs.log
+hole_Z_*.png
+.ipynb_checkpoints/
+history_hole_*.npz

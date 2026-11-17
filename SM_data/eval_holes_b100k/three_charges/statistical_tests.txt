@@ -1,0 +1,13 @@
+Case MAE_log across case classes: Kruskal-Wallis H=125.66, p=1.05e-24 (interp. gap 1: n=105, interp. gap 2: n=60, interp. gap 3 edge: n=10, interp. gap 3 centre: n=5, extrap. d=1: n=56, extrap. d=2: n=14, extrap. d=3: n=2)
+Case MAE_log across model classes: Kruskal-Wallis H=27.37, p=1.14e-06 (interpolation: n=105, mixed: n=135, extrapolation: n=12)
+Interpolation vs extrapolation: Mann-Whitney U=919.0, p=1.99e-26 (medians 0.0194 vs 0.1347, n=180/72)
+Interp. gap 1 vs gap 2: Mann-Whitney U=2365.0, p=7.87e-03 (medians 0.0153 vs 0.0222, n=105/60)
+Interp. gap 2 vs gap 3: Mann-Whitney U=328.0, p=1.08e-01 (medians 0.0222 vs 0.0239, n=60/15)
+Interp. gap 3 edge vs centre: Mann-Whitney U=13.0, p=1.65e-01 (medians 0.0218 vs 0.0381, n=10/5)
+Interpolation: Spearman(local gap width, MAE_log) rho=0.273, p=2.09e-04
+Interpolation, charges 3-8: Spearman(local gap width, MAE_log) rho=0.388, p=4.49e-07
+Extrapolation: Spearman(distance d, MAE_log) rho=0.455, p=5.83e-05
+Three-charge vs single-charge MAE_log (paired): Wilcoxon p=9.39e-14; median ratio=1.50, 77% of cases worse
+Three-charge vs two-charge (mean of models sharing z and one partner) MAE_log (paired): Wilcoxon p=2.07e-10; median ratio=1.21, 63% of cases worse
+Isolated interpolation, Z=3-7: MAE_log for 1 / 2 / 3 excluded charges: Kruskal-Wallis H=0.59, p=7.45e-01 (1: n=5, 2: n=30, 3: n=75)
+  Spearman(n_excluded, MAE_log) rho=0.032, p=7.39e-01

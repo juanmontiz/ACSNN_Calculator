@@ -1,0 +1,8 @@
+Case MAE_log across case classes: Kruskal-Wallis H=32.68, p=3.77e-07 (interp. isolated: n=42, interp. adjacent: n=12, extrap. d=1: n=16, extrap. d=2: n=2)
+Case MAE_log across pair classes: Kruskal-Wallis H=14.36, p=7.61e-04 (interpolation: n=42, mixed: n=24, extrapolation: n=6)
+Interpolation isolated vs adjacent pair (MAE_log): Mann-Whitney U=248.0, p=9.42e-01 (medians 0.0145 vs 0.0149, n=42/12)
+Extrapolation d=1 vs d=2 (MAE_log): Mann-Whitney U=8.0, p=3.27e-01 (medians 0.1187 vs 0.6099, n=16/2)
+Interpolation vs extrapolation (MAE_log): Mann-Whitney U=48.0, p=1.27e-08 (medians 0.0149 vs 0.1494, n=54/18)
+Two-charge vs single-charge MAE_log (paired by charge): Wilcoxon W=966.0, p=5.08e-02; median ratio = 1.16, 65% of cases worse than single
+Interior charges 3-8 (interpolation): Spearman(|a-b|, MAE_log) rho=-0.164, p=2.71e-01
+Interior charges 3-8: Spearman(|z-partner|, degradation) rho=-0.173, p=2.46e-01
