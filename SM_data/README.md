@@ -23,7 +23,7 @@ The ACSNN calculator itself (the model of the main article, for end users) is in
 | `train_totals_NN_holes.py` | Training of the 129 hole networks (CDW-EIS + CTMC, no Rudd; 10⁵ epochs, seed 17) → `best_statedict_gauss_128_hole_XYZ_b100k.pth`, `history_hole_XYZ_b100k.npz`. |
 | `best_statedict_gauss_128.pth` | Final ACSNN model (main article). |
 | `best_statedict_gauss_128_hole_XYZ_b100k.pth` | The 129 hole networks. `XYZ` lists the excluded charges, padded with the lowest one: `333` = only $Z_P=3$ excluded, `335` = 3 and 5, `357` = 3, 5 and 7. |
-| `history_hole_XYZ_b100k.npz` | Training/validation loss histories of the hole networks (Fig. S1). Not included in this repository because of their size (99 MB); they will be deposited on Zenodo and are available from the authors on request. They are written again when the networks are retrained (step 0). |
+| `histories/history_hole_XYZ_b100k_reduced.npz` | Reduced training/validation loss histories of the 129 hole networks (Fig. S1; 1.1 MB in total): losses at the ~330 log-spaced epochs plotted in Fig. S1, running minimum of the validation loss, and epoch and value of the minimum (see `supplementary/history_io.py`). The full histories (`history_hole_XYZ_b100k.npz`, 10⁵ epochs, 99 MB in total) are not distributed: retraining (step 0) writes them and `supplementary/reduce_histories.py` reduces them. Fig. S1 is identical with either. |
 | `evaluate_holes.py`, `evaluate_two_charges.py`, `evaluate_three_charges.py` | Evaluation of the networks with one, two and three excluded charges → `eval_holes_b100k/`. |
 | `zp2_analysis.py` | $Z_P^2$ scaling of CDW-EIS, ACSNN interpolator and scaling baselines → `eval_zp2_b100k/`. |
 | `sommerfeld_analysis.py` | Perturbative regime $\eta<1$ of CDW-EIS → `eval_sommerfeld_b100k/`. |
@@ -51,6 +51,7 @@ variable `MODEL_SET=b100k`.
 # 0) (optional, long) retrain the networks; existing .pth files with the same name are skipped
 python3 train_totals_NN.py                       # final ACSNN model
 EPOCHS=100000 python3 train_totals_NN_holes.py   # 129 hole networks
+python3 supplementary/reduce_histories.py        # reduced histories for Fig. S1 (histories/)
 
 # 1) evaluation of the hole networks (SM Secs. S7-S9, Tables S3-S9)
 MODEL_SET=b100k python3 evaluate_holes.py

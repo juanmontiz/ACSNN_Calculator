@@ -88,22 +88,23 @@ def sigma_axes(axes, ncols):
 
 # ------------------------------------------------------------------------------------------------ S1
 def fig_s1():
-    hist = {1: [], 2: [], 3: []}
-    for f in sorted(glob.glob('history_hole_*_b100k.npz')):
-        h = np.load(f)
-        hist[len(set(os.path.basename(f)[13:16]))].append((h['train'], h['val']))
+    # full histories if present (after retraining), otherwise the reduced ones in histories/ (see history_io.py)
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from history_io import load_histories
+    hist = load_histories()
     fig, ax = plt.subplots(1, 2, figsize=(16, 6.2), constrained_layout=True)
-    ep = np.arange(1, 100001)
-    s = np.unique(np.logspace(0, 5, 400).astype(int)) - 1
     for k, col in EXCL_COLORS.items():
-        tr = np.array([t for t, _ in hist[k]]); va = np.array([v for _, v in hist[k]])
-        best = np.minimum.accumulate(va, axis=1)
+        H = hist[k]
+        ep = H[0]['epoch']
+        tr = np.array([h['train'] for h in H]); va = np.array([h['val'] for h in H])
+        best = np.array([h['best'] for h in H])
         q = np.percentile(best, [25, 50, 75], axis=0)
-        ax[0].plot(ep[s], q[1][s], color=col, lw=2.5, label=f'{k} excluded ({len(hist[k])} networks)')
-        ax[0].fill_between(ep[s], q[0][s], q[2][s], color=col, alpha=0.25, lw=0)
-        ax[0].plot(np.median(va.argmin(axis=1) + 1), np.median(best[:, -1]), 'v', color=col, ms=11, mec='k')
-        ax[1].plot(ep[s], np.median(tr, axis=0)[s], color=col, lw=2, label=f'{k} excluded')
-        ax[1].plot(ep[s], np.median(va, axis=0)[s], color=col, lw=2, ls='--')
+        ax[0].plot(ep, q[1], color=col, lw=2.5, label=f'{k} excluded ({len(H)} networks)')
+        ax[0].fill_between(ep, q[0], q[2], color=col, alpha=0.25, lw=0)
+        ax[0].plot(np.median([h['argmin_epoch'] for h in H]), np.median([h['min_val'] for h in H]), 'v', color=col,
+                   ms=11, mec='k')
+        ax[1].plot(ep, np.median(tr, axis=0), color=col, lw=2, label=f'{k} excluded')
+        ax[1].plot(ep, np.median(va, axis=0), color=col, lw=2, ls='--')
     for a, letter in zip(ax, 'ab'):
         a.set_xscale('log'); a.set_yscale('log'); a.set_xlabel('Epoch', fontsize=20); style(a)
         label(a, letter, y=0.06, x=0.04)
